@@ -10,8 +10,24 @@ ROOT_REDIRECT_URL = 'http://github.com/engie/webpaste'
 FAVICON = 'paste.png'
 UPLOADS_DIR = 'uploads'
 
+BASIC_UPLOAD_FORM = """<html>
+<head>
+<title>Web Paste Uploader</title>
+</head>
+<body>
+<h1>Web Paste Uploader</h1>
+<p>Share a file by uploading it to the server.</p>
+<form method="POST">
+<p><input type="file" name="file"/></br>
+<input type="submit"></p>
+</form>
+</body>
+</html>
+"""
+
 EXTENSION_FILTER = re.compile('^\.[a-zA-Z0-9]{1,20}$')
 ERROR_404 = '404 File Not Found'
+DEFAULT_EXTENSION = ''
 stderr = None
 
 def getFileList():
@@ -29,9 +45,12 @@ def getContentType( filename ):
         return 'application/octet-stream'
 
 def saveFile( filename, data ):
-    extension = os.path.splitext( filename )[1]
-    if EXTENSION_FILTER.match( extension ) == None:
-        extension = '.bin'
+    if filename != None:
+        extension = os.path.splitext( filename )[1]
+        if EXTENSION_FILTER.match( extension ) == None:
+            extension = DEFAULT_EXTENSION
+    else:
+        extension = DEFAULT_EXTENSION
 
     sha = hashlib.sha256()
     sha.update( data )
@@ -53,10 +72,10 @@ def paste( environ, start_response ):
     method = environ["REQUEST_METHOD"]
     if method == "GET":
         path = environ["PATH_INFO"][1:]
-        #Redirect root requests to some useful info
+        #Show a html upload form for basic browser access
         if path == "" or path == "index.html" or path == "index.htm":
-            start_response( '303 See Other', [('Location', ROOT_REDIRECT_URL)] )
-            return []
+            start_response( '200 OK', [('Content-type', "text/html")] )
+            return [ BASIC_UPLOAD_FORM ]
         #Serve up a favicon
         elif path == "favicon.ico":
             try:
@@ -82,6 +101,8 @@ def paste( environ, start_response ):
                                 environ = environ,
                                 keep_blank_values = True )
         fileitem = post["file"]
+        if fileitem == None:
+            raise Exception("File not found")
         filename = saveFile( fileitem.filename, fileitem.value )
         start_response( '303 See Other', [('Location', filename)] )
         return []
