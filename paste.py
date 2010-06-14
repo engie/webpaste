@@ -116,7 +116,8 @@ def paste( environ, start_response ):
             raise Exception("Upload not found in form.")
 
         filename = saveFile( fileitem.filename, fileitem.file.read() )
-        start_response( '200 OK', [('Content-Type', "text/html")] )
+        start_response( '200 OK', [('Content-Type', "text/html",
+                                    'X-File-URL', filename)] )
         return [ getSuccessPage( filename ) ]
     else:
         start_response( ERROR_404, [] )
