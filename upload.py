@@ -3,6 +3,7 @@ import gtk
 import os
 import tempfile
 import httplib
+import webbrowser
 
 URL = "localhost:8080"
 PAGE = "/"
@@ -26,9 +27,10 @@ def upload( data, filename, mime_type ):
     h.endheaders()
     h.send(body)
     response = h.getresponse()
-    print response.status
-    print response.reason
-    print response.getheader( "X-File-URL" )
+    if response.status == 200:
+        return response.getheader( "X-File-URL" )
+    
+    raise Exception( "Upload failed" )
 
 def pixbufToFile( pixbuf ):
     handle, tmp_file_name = tempfile.mkstemp()
@@ -42,9 +44,15 @@ def pixbufToFile( pixbuf ):
 if __name__ == "__main__":
     clipboard = gtk.Clipboard()
     targets = clipboard.wait_for_targets()
+
+    result = ""
     if 'image/png' in targets:
         pixbuf = clipboard.wait_for_image()
-        upload( pixbufToFile( pixbuf ), "clipboard.png", "image/png" )
+        result = upload( pixbufToFile( pixbuf ), "clipboard.png", "image/png" )
     elif 'text/plain' in targets:
         text = clipboard.wait_for_text()
-        upload( text, "clipboard.txt", "text/text" )
+        result = upload( text, "clipboard.txt", "text/text" )
+    else:
+        raise Exception( "Could not decode clipboard contents" )
+
+    webbrowser.open( "http://" + URL + "/" + result )
