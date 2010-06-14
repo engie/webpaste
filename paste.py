@@ -17,13 +17,24 @@ BASIC_UPLOAD_FORM = """<html>
 <body>
 <h1>Web Paste Uploader</h1>
 <p>Share a file by uploading it to the server.</p>
-<form method="POST">
+<form method="POST" enctype="multipart/form-data">
 <p><input type="file" name="file"/></br>
 <input type="submit"></p>
 </form>
 </body>
-</html>
-"""
+</html>"""
+
+def getSuccessPage( filename ):
+    return """<html>
+    <head>
+    <title>Wab Paste Uploader</title>
+    </head>
+    <body>
+    <h1>File Successfully Uploaded</h1>
+    <p><a href="%s">%s</a></p>
+    <p><a href="/">Upload Another</a></p>
+    </body>
+    </html>""" % (filename, filename)
 
 EXTENSION_FILTER = re.compile('^\.[a-zA-Z0-9]{1,20}$')
 ERROR_404 = '404 File Not Found'
@@ -101,11 +112,12 @@ def paste( environ, start_response ):
                                 environ = environ,
                                 keep_blank_values = True )
         fileitem = post["file"]
-        if fileitem == None:
-            raise Exception("File not found")
-        filename = saveFile( fileitem.filename, fileitem.value )
-        start_response( '303 See Other', [('Location', filename)] )
-        return []
+        if fileitem == None or fileitem.file == None:
+            raise Exception("Upload not found in form.")
+
+        filename = saveFile( fileitem.filename, fileitem.file.read() )
+        start_response( '200 OK', [('Content-Type', "text/html")] )
+        return [ getSuccessPage( filename ) ]
     else:
         start_response( ERROR_404, [] )
         return []
