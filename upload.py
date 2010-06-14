@@ -15,10 +15,10 @@ def upload( data, filename, mime_type ):
     body += 'Content-Disposition: form-data; name="file"; filename="%s"' % filename + CRLF
     body += 'Content-Type: %s' % mime_type + CRLF
     body += CRLF
-    body += data
+    body += data + CRLF
     body += '--' + BOUNDARY + '--' + CRLF
     body += CRLF
-    
+
     h = httplib.HTTPConnection( URL )
     h.putrequest( "POST", PAGE )
     h.putheader( "Content-Type", 'multipart/form-data; boundary=%s' % BOUNDARY )
