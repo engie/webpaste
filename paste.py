@@ -21,8 +21,9 @@ BASIC_UPLOAD_FORM = """<html>
 <p><input type="file" name="file"/></br>
 <input type="submit"></p>
 </form>
+<p>See <a href="%s">%s</a> for more information.</p>
 </body>
-</html>"""
+</html>""" % (ROOT_REDIRECT_URL, ROOT_REDIRECT_URL)
 
 def getSuccessPage( filename ):
     return """<html>
