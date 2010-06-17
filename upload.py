@@ -62,34 +62,39 @@ def getWin32ClipboardContents():
     import types
     
     win32clipboard.OpenClipboard()
-    try:
-        types = {} 
-        for name, val in win32con.__dict__.items():
-            if name[:3] == "CF_" and name != "CF_SCREENFONTS":
-                types[val] = name
+    types = {} 
+    for name, val in win32con.__dict__.items():
+        if name[:3] == "CF_" and name != "CF_SCREENFONTS":
+            types[val] = name
 
-        targets = []
-        enum = 0
-        while 1:
-            enum = win32clipboard.EnumClipboardFormats( enum )
-            if enum == 0:
-                break
-            if win32clipboard.IsClipboardFormatAvailable( enum ) == False:
-                continue
-            print enum
-            if not enum in types:
-                name = win32clipboard.GetClipboardFormatName( enum )
-                types[enum] = name
-            targets.append( types[enum] )
+    targets = []
+    enum = 0
+    while 1:
+        enum = win32clipboard.EnumClipboardFormats( enum )
+        if enum == 0:
+            break
+        if win32clipboard.IsClipboardFormatAvailable( enum ) == False:
+            continue
 
-        print targets
-        if "CF_BITMAP" in targets:
-            data = win32clipboard.GetClipboardData( win32clipboard.CF_BITMAP )
-            return "clipboard.bmp", "image/bmp", data
-        
-        
-    finally:
-        win32clipboard.CloseClipboard()
+        if not enum in types:
+            name = win32clipboard.GetClipboardFormatName( enum )
+            types[enum] = name
+        targets.append( types[enum] )
+
+    if "CF_BITMAP" in targets:
+        import Image
+        import ImageGrab
+        im = ImageGrab.grabclipboard()
+
+        import StringIO
+        output = StringIO.StringIO()
+        im.save(output, "PNG")
+
+        return "clipboard.png", "image/png", output.getvalue()
+
+    if "CF_TEXT" in targets:
+        data = win32clipboard.GetClipboardData( win32con.CF_TEXT )
+        return "clipboard.txt", "text/text", data
 
 def getClipboardContents():
     try:
@@ -106,4 +111,5 @@ def getClipboardContents():
 
 if __name__ == "__main__":
     file_name, mime_type, data = getClipboardContents()
+    print file_name, mime_type, data
     #webbrowser.open( "http://" + URL + "/" + result )
