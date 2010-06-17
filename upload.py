@@ -1,11 +1,9 @@
-import pygtk
-import gtk
 import os
 import tempfile
 import httplib
 import webbrowser
 
-URL = "localhost:8080"
+URL = "tiamat:8000"
 PAGE = "/"
 
 BOUNDARY = '----------hfoidahfhfodas_$'
@@ -32,7 +30,7 @@ def upload( data, filename, mime_type ):
     
     raise Exception( "Upload failed" )
 
-def pixbufToFile( pixbuf ):
+def pixbufToImage( pixbuf ):
     handle, tmp_file_name = tempfile.mkstemp()
     try:
         pixbuf.save( tmp_file_name, "png" )
@@ -41,18 +39,71 @@ def pixbufToFile( pixbuf ):
     finally:
         os.unlink(tmp_file_name)
 
-if __name__ == "__main__":
+def getGTKClipboardContents():
+    import gtk
     clipboard = gtk.Clipboard()
     targets = clipboard.wait_for_targets()
-
-    result = ""
     if 'image/png' in targets:
         pixbuf = clipboard.wait_for_image()
-        result = upload( pixbufToFile( pixbuf ), "clipboard.png", "image/png" )
+        return "clipboard.png", "image/png", pixbufToImage( pixbuf ) 
+
     elif 'text/plain' in targets:
         text = clipboard.wait_for_text()
-        result = upload( text, "clipboard.txt", "text/text" )
-    else:
-        raise Exception( "Could not decode clipboard contents" )
+        return "clipboard.txt", "text/text", text
 
-    webbrowser.open( "http://" + URL + "/" + result )
+    raise Exception( "Could not decode clipboard contents" )
+
+def getWin32ClipboardContents():
+    """
+    With thanks to http://mail.python.org/pipermail/python-list/2003-August/840896.html
+    """
+    import win32clipboard
+    import win32con
+    import types
+    
+    win32clipboard.OpenClipboard()
+    try:
+        types = {} 
+        for name, val in win32con.__dict__.items():
+            if name[:3] == "CF_" and name != "CF_SCREENFONTS":
+                types[val] = name
+
+        targets = []
+        enum = 0
+        while 1:
+            enum = win32clipboard.EnumClipboardFormats( enum )
+            if enum == 0:
+                break
+            if win32clipboard.IsClipboardFormatAvailable( enum ) == False:
+                continue
+            print enum
+            if not enum in types:
+                name = win32clipboard.GetClipboardFormatName( enum )
+                types[enum] = name
+            targets.append( types[enum] )
+
+        print targets
+        if "CF_BITMAP" in targets:
+            data = win32clipboard.GetClipboardData( win32clipboard.CF_BITMAP )
+            return "clipboard.bmp", "image/bmp", data
+        
+        
+    finally:
+        win32clipboard.CloseClipboard()
+
+def getClipboardContents():
+    try:
+        import win32clipboard
+        return getWin32ClipboardContents()
+    except ImportError:
+        pass
+
+    try:
+        import pygtk
+        return getGTKClipboardContents()
+    except ImportError:
+        pass
+
+if __name__ == "__main__":
+    file_name, mime_type, data = getClipboardContents()
+    #webbrowser.open( "http://" + URL + "/" + result )
