@@ -9,9 +9,9 @@ PAGE = "/"
 BOUNDARY = '----------hfoidahfhfodas_$'
 CRLF = "\r\n"
 
-def upload( data, filename, mime_type ):
+def upload( data, file_name, mime_type ):
     body  = '--' + BOUNDARY + CRLF
-    body += 'Content-Disposition: form-data; name="file"; filename="%s"' % filename + CRLF
+    body += 'Content-Disposition: form-data; name="file"; filename="%s"' % file_name + CRLF
     body += 'Content-Type: %s' % mime_type + CRLF
     body += CRLF
     body += data + CRLF
@@ -111,5 +111,5 @@ def getClipboardContents():
 
 if __name__ == "__main__":
     file_name, mime_type, data = getClipboardContents()
-    print file_name, mime_type, data
-    #webbrowser.open( "http://" + URL + "/" + result )
+    url = upload( data, file_name, mime_type )
+    webbrowser.open( "http://" + URL + "/" + url )
