@@ -5,11 +5,12 @@ Webpaste is a pair of client/server scripts for easily sharing the contents of y
 Works So Far
 ------------
 * Basic server that accepts uploads, serves a basic upload form and serves uploaded files
-* Basic client for Gnome based systems that uploads the current clipboard contents
+* Basic client for Gnome based systems that uploads images and text
+* Basic client for Win32 that uploads images and text
 
 TODO
 ----
-* Create clients for other OS's (Win32, KDE, OSX)
+* Create clients for other OS's ( KDE, OSX)
 * Make the clients run as background / system tray tasks that respond to a hotkey
 * Delete files from the server after a period of time or if storage requirements get too high
 
